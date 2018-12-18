@@ -32,13 +32,13 @@ public class SpawnManager : MonoBehaviour
     /// _sharedSpawnPoints dinamik listesine SpawnPoint tipindeki objelerin tamamını ekler.
     /// DummyPlayers dizisine bütün DummyPlayer tipindeki objeleri ekler.
     /// </summary>
-    private void Awake()
+     private void Awake()
     {
 		_sharedSpawnPoints.AddRange(FindObjectsOfType<SpawnPoint>());
 
 		DummyPlayers = FindObjectsOfType<DummyPlayer>();
     }
-
+    
     #region SPAWN ALGORITHM
     public SpawnPoint GetSharedSpawnPoint(PlayerTeam team)
     {
@@ -132,14 +132,26 @@ public class SpawnManager : MonoBehaviour
 
     private float GetDistanceToClosestMember(Vector3 position, PlayerTeam playerTeam)
     {
+        bool firstLoop = true;
         foreach (var player in DummyPlayers)
         {
-            //player disabled değil player ile aynı takımdaysa yani dostsa ve ölmemişse
+            if (player == DummyPlayers[0])
+            {
+                continue;
+            }
+
+            //player disabled değil,playerTeam none değil ise, player ile aynı takımdaysa( yani dostsa ) ve ölmemişse
             if (!player.Disabled && player.PlayerTeamValue != PlayerTeam.None && player.PlayerTeamValue == playerTeam && !player.IsDead())
             {
-               //takım arkadaşlarının (aynı takım üyelerinin) ışınlanma noktasına olan uzaklığını hesapla
+                //takım arkadaşlarının (aynı takım üyelerinin) ışınlanma noktasına olan uzaklığını hesapla
                 float playerDistanceToSpawnPoint = Vector3.Distance(position, player.Transform.position);
 
+                if (firstLoop)
+                {
+                    _closestDistance = playerDistanceToSpawnPoint;
+                    firstLoop = false;
+                }
+          
                 //bu mesafe _closestDistance dan küçükse _closestDistance a bu mesafeyi ata
                 if (playerDistanceToSpawnPoint < _closestDistance)
                 {
@@ -147,7 +159,6 @@ public class SpawnManager : MonoBehaviour
                 }
             }
         }
-
         //en yakın takım arkadaşının mesafesini dödürüyor
         //_closestDistance döndür
         return _closestDistance;

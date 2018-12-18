@@ -39,6 +39,7 @@ public class SpawnPoint : MonoBehaviour
 	void Awake()
 	{
 		PointTransform = transform;
+        SpawnTimer = 0f;
 #if UNITY_EDITOR
         if (transform.rotation.eulerAngles.x != 0 || transform.rotation.eulerAngles.z != 0)
         {
@@ -51,13 +52,14 @@ public class SpawnPoint : MonoBehaviour
 		SpawnTimer = 2f;
 	}
 
-	private void Update()
-	{
-		if (SpawnTimer > 0)
-		{
+    private void Update()
+    {
+        Debug.Log(SpawnTimer);
+        if (SpawnTimer > 0)
+        {
             Debug.Log(SpawnTimer);
             SpawnTimer -= Time.deltaTime;
-		}
-	}
+        }
+    }
 }
 
