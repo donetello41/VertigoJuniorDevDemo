@@ -52,14 +52,14 @@ public class SpawnPoint : MonoBehaviour
 		SpawnTimer = 2f;
 	}
 
-    private void Update()
-    {
-        Debug.Log(SpawnTimer);
-        if (SpawnTimer > 0)
-        {
-            Debug.Log(SpawnTimer);
-            SpawnTimer -= Time.deltaTime;
-        }
-    }
+    //private void Update()
+    //{
+    //    Debug.Log(SpawnTimer);
+    //    if (SpawnTimer > 0)
+    //    {
+    //        Debug.Log(SpawnTimer);
+    //        SpawnTimer -= Time.deltaTime;
+    //    }
+    //}
 }
 

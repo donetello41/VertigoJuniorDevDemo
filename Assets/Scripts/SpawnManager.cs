@@ -48,7 +48,7 @@ public class SpawnManager : MonoBehaviour
         //Işınlanma noktalarına enyakındost (DistanceToClosestFriend) uzaklığı ve
         //enyakındüşman uzaklığını (DistanceToClosestEnemy) hesapla
 
-        GetSpawnPointsByDistanceSpawning(/*Please add appropriate parameters here*/);
+        GetSpawnPointsByDistanceSpawning(team, ref spawnPoints);
 
 
         //ışınlanma Noktaları Yoksa
@@ -65,14 +65,43 @@ public class SpawnManager : MonoBehaviour
         return spawnPoint;
     }
 
-    private void GetSpawnPointsByDistanceSpawning(/*Please add appropriate parameters here*/)
+    private void GetSpawnPointsByDistanceSpawning(PlayerTeam team, ref List<SpawnPoint> suitableSpawnPoints)
     {
-		//Please apply your algorithm here
+        //Please apply your algorithm here
         //seçilecek olan spawn noktasına en yakın düşmanın uzaklığı _minDistanceToClosestEnemy değerinden yüksek olmalı
         //Herhangibir oyuncunun(düşman/dost) o spawn noktasına olan uzaklığı _minMemberDistance değerinden yüksek olmalı
         //spawn noktasında 2 saniye içinde bir spawn yapılmamış olmalı
+        if (suitableSpawnPoints == null)
+        {
+            suitableSpawnPoints = new List<SpawnPoint>();
+        }
+        suitableSpawnPoints.Clear();
+        _sharedSpawnPoints.Sort(delegate (SpawnPoint a, SpawnPoint b)
+        {
+            if (a.DistanceToClosestEnemy == b.DistanceToClosestEnemy)
+            {
+                return 0;
+            }
+            if (a.DistanceToClosestEnemy > b.DistanceToClosestEnemy)
+            {
+                return 1;
+            }
+            return -1;
+        });
+        for (int i = 0; i < _sharedSpawnPoints.Count; i++)
+        {
+            if (_sharedSpawnPoints[i].DistanceToClosestEnemy > _minDistanceToClosestEnemy)
+            {
+                if (!(_sharedSpawnPoints[i].DistanceToClosestFriend <= _minMemberDistance) && !(_sharedSpawnPoints[i].DistanceToClosestEnemy <= _minMemberDistance) && _sharedSpawnPoints[i].SpawnTimer <= 0)
+                {
+                    suitableSpawnPoints.Add(_sharedSpawnPoints[i]);
+                }
+            }
+        }
 
-    }
+
+
+        }
 
     private void GetSpawnPointsBySquadSpawning(PlayerTeam team, ref List<SpawnPoint> suitableSpawnPoints)
     {
@@ -172,7 +201,7 @@ public class SpawnManager : MonoBehaviour
     public void TestGetSpawnPoint()
     {
     	SpawnPoint spawnPoint = GetSharedSpawnPoint(PlayerToBeSpawned.PlayerTeamValue);
-    	PlayerToBeSpawned.Transform.position = spawnPoint.PointTransform.position;
+        PlayerToBeSpawned.Transform.position = new Vector3(spawnPoint.transform.position.x, spawnPoint.transform.position.y + 1, spawnPoint.transform.position.z);// spawnPoint.PointTransform.position;
     }
 
 }
