@@ -10,7 +10,7 @@ public class SpawnPoint : MonoBehaviour
 
 	public float SpawnTimer { get; private set; }
 
-	public float DistanceToClosestEnemy//düşman yakınlığı
+    public float DistanceToClosestEnemy//düşman yakınlığı
 	{
 		get
 		{
@@ -68,5 +68,7 @@ public class SpawnPoint : MonoBehaviour
             SpawnTimer -= Time.deltaTime;
         }
     }
+
+
 }
 
