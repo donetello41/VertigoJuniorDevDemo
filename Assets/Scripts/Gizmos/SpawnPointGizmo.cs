@@ -7,7 +7,7 @@ public class SpawnPointGizmo : MonoBehaviour
     [SerializeField] private Color _color;
     /// <summary>
 	/// Arayüzden tanımlanan renge göre
-	/// sahne ekranındayken bağlı olduğu gameObject in z,y,x pozisyonunda (y +1 fazla ekranda gözükmesi için) küre çizer.
+	/// sahne ekranındayken bağlı olduğu gameObject in x,y,z pozisyonunda (y +1 fazla ekranda gözükmesi için) küre çizer.
 	/// </summary>
 	void OnDrawGizmos()
 	{

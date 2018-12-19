@@ -8,7 +8,6 @@ public enum PlayerTeam
 {
     None,
     BlueTeam,
-
     RedTeam
 }
 
@@ -35,47 +34,70 @@ public class SpawnManager : MonoBehaviour
      private void Awake()
     {
 		_sharedSpawnPoints.AddRange(FindObjectsOfType<SpawnPoint>());
-
 		DummyPlayers = FindObjectsOfType<DummyPlayer>();
     }
-    
+
     #region SPAWN ALGORITHM
+    /// <summary>
+    /// spawn noktalarının sayısı kadar boş bir liste ouşturur 
+    /// Işınlanma noktalarına enyakındost (DistanceToClosestFriend) uzaklığı ve 
+    /// enyakındüşman uzaklığını (DistanceToClosestEnemy) hesaplanır.(calculateDistancesForSpawnPoints)
+    /// Düşmanlarımıza olan uzaklığa göre ışınlanma noktası seçimi çalışır. Parametre olarak spawnPoints dizisinin referansını
+    /// ve ışınlanacak oyuncunun takımını alır. _sharedSpawnPoints leri DistanceToClosestEnemy değerine göre küçükten büyüğe sıralar.
+    /// Bu spawn noktalarına en yakın düşman değeri _minDistanceToClosestEnemy büyükse
+    /// ve herhangi bir oyuncunun o spawn noktasına olan uzaklığı _minMemberDeğerinden yüksek ise ve o spawn noktasına
+    /// 2 saniye içinde kimse ışınlanmamışsa o nokta SpawnPoints (ışınlanma noktasına) dizisine aktarılır.
+    /// Eğer spawnPoints dizisi boş ise dostlarımıza olan uzaklığa göre spawn noktası seçimi çalışır.
+    /// bu method parametre olarak spawnsPoints dizisinin referansını ve ışınlanacak oyuncunun takımını alır.
+    /// _sharedSpawnPoints leri DistanceToClosestFriend değerine göre küçükten büyüğe sıralar.
+    /// Bu spawn noktalarına en yakın dost(DistanceToClosestFriend) değeri _maxDistanceToClosestFriend büyükse
+    /// ve herhangi bir oyuncunun o spawn noktasına olan uzaklığı _minMemberDeğerinden yüksek ise ve o spawn noktasına
+    /// 2 saniye içinde kimse ışınlanmamışsa o nokta SpawnPoints (ışınlanma noktasına) dizisine aktarılır.
+    /// Eğer spawnPoints dizisi yine boşsa _sharedSpawnPoints(paylaşımlı ışınlanma noktalatının) lerin ilk indexi ışınlanma noktası olarak atanır.
+    /// spawnPoints listesinde 2 den fazla eleman yok ise spawnPoint noktasına spawnPoints listesinin ilk elemanı atanır
+    /// Eğer spawnPoints listesinde 2 den fazla eleman var ise hangi  noktanın spawnPoint olcağına şu şekilde karar verilir.
+    /// spawnPoints listesinin eleman sayısının yarısı alınır tam çıkmazsa bir alt değere yuvarlanır ve bu çıkan sayı ile 0 arasında rastgele bir sayı üretilir.
+    /// bu üretilen sayı spawnPoints Listesinin indisi olur ve bu nokta spawnPoint olarak belirlenir.
+    /// bu ışınlanma noktası en uygun ışınlanma noktası olarak gönderilir.
+    /// </summary>
+    /// <param name="team">player ın takımı</param>
+    /// <returns>uygun bir ışınlanma noktası döndürür</returns>
+
     public SpawnPoint GetSharedSpawnPoint(PlayerTeam team)
     {
         List<SpawnPoint> spawnPoints = new List<SpawnPoint>(_sharedSpawnPoints.Count);
-
         CalculateDistancesForSpawnPoints(team);
-        //Işınlanma noktalarına enyakındost (DistanceToClosestFriend) uzaklığı ve
-        //enyakındüşman uzaklığını (DistanceToClosestEnemy) hesapla
-
         GetSpawnPointsByDistanceSpawning(team, ref spawnPoints);
-
-
-        //ışınlanma Noktaları Yoksa
         if (spawnPoints.Count <= 0)
         {
             GetSpawnPointsBySquadSpawning(team, ref spawnPoints);
         }
-        //ışınlanma noktaları 1 den az ise ilk indexse ışınlan 1 den fazla ise
-        //ışınlanma noktalarını 1/2 ile çarp ve virgüllü çıkarsa bir alt değere yuvarla sonra bunların arasında rastgele bir index seç
-        //ve ışınlanma noktası olarak belirle
         SpawnPoint spawnPoint = spawnPoints.Count <= 1 ? spawnPoints[0] : spawnPoints[_random.Next(0, (int)((float)spawnPoints.Count * .5f))];
-        //ışınlanma süresini başlat
+
+
         spawnPoint.StartTimer();
         return spawnPoint;
     }
 
+    /// <summary>
+    /// suitableSpawnPoints noktalarını temizler.
+    /// paylaşımlı ışınlanma noktaları (_sharedSpawnPoints) arasında DistanceToClosestEnemy değerine göre küçükten büyüğe sıralama yapar.
+    /// paylaşımlı ışınlanma noktalarının DistanceToClosestEnemy değeri _minDistanceToClosestEnemy değerinden büyükse ve
+    /// herhangi bir oyuncunun o spawn noktasına olan uzaklığı _minMemberDeğerinden küçük ise
+    /// o noktayı suitableSpawnPoints listesine ekle
+    /// </summary>
+    /// <param name="team">ışınlanacak oyuncunun takımı</param>
+    /// <param name="suitableSpawnPoints">spawnpoints lerin referansı</param>
     private void GetSpawnPointsByDistanceSpawning(PlayerTeam team, ref List<SpawnPoint> suitableSpawnPoints)
     {
-        //Please apply your algorithm here
-        //seçilecek olan spawn noktasına en yakın düşmanın uzaklığı _minDistanceToClosestEnemy değerinden yüksek olmalı
-        //Herhangibir oyuncunun(düşman/dost) o spawn noktasına olan uzaklığı _minMemberDistance değerinden yüksek olmalı
-        //spawn noktasında 2 saniye içinde bir spawn yapılmamış olmalı
         if (suitableSpawnPoints == null)
         {
             suitableSpawnPoints = new List<SpawnPoint>();
         }
         suitableSpawnPoints.Clear();
+
+        //anonmous method da _sharedSpawnPoints noktalarını arasında DistanceToClosestEnemy değerine göre
+        //küçükten büyüğe sıralama yapar
         _sharedSpawnPoints.Sort(delegate (SpawnPoint a, SpawnPoint b)
         {
             if (a.DistanceToClosestEnemy == b.DistanceToClosestEnemy)
@@ -98,11 +120,18 @@ public class SpawnManager : MonoBehaviour
                 }
             }
         }
-
-
-
-        }
-
+    }
+    /// <summary>
+    /// spawnpoint dizisiniboşaltır ve paylaşımlı ışınlanma noktalarını(_sharedSpawnPoints)
+    /// DistanceToClosestFriend(en yakın Dost) değerine göre küçükten büyüğe doğru sıralar
+    /// eğer paylaşılmış ışınlanma(_saharedSpawnPoints) noktaları var ise ve bu noktaların
+    /// en yakın arkadaş uzaklığının(DistanceToClosestFriend) değeri maximum yakınlık uzaklığından(_maxDistanceToclosest)
+    /// küçükse ve herhangi bir oyuncun o spawn noktasına olan uzaklığı _minMemberDeğerinden yüksek ise
+    /// o noktayı suitableSpawnPoints listesine ekle
+    /// suitableSpawnPoints noktasında hiç eleman yoksa bu listeye _saharedSpawnPoints bu noktaların ilkini ata
+    /// </summary>
+    /// <param name="team">ışınlanacak oyuncunun nun takımı</param>
+    /// <param name="suitableSpawnPoints">spawnpoints lerin referansı</param>
     private void GetSpawnPointsBySquadSpawning(PlayerTeam team, ref List<SpawnPoint> suitableSpawnPoints)
     {
         if (suitableSpawnPoints == null)
@@ -111,8 +140,8 @@ public class SpawnManager : MonoBehaviour
         }
         suitableSpawnPoints.Clear();
 
-        //_sharedSpawnPoints noktalarının en yakın takım arkadaşının mesafesine göre sıralama yapıyor;
-        //
+        //anonmous method da _sharedSpawnPoints noktalarını arasında DistanceToClosestFriend değerine göre
+        //küçükten büyüğe sıralama yapar
         _sharedSpawnPoints.Sort(delegate (SpawnPoint a, SpawnPoint b)
         {
             if (a.DistanceToClosestFriend == b.DistanceToClosestFriend)
@@ -125,30 +154,26 @@ public class SpawnManager : MonoBehaviour
             }
             return -1;
         });
-        //paylaşılmıs ışınlanma noktalarının sayısı i den büyükse ve
-        //paylaşılmış ışınlanma noktalarının i inci paylaşılmış ışınlanma noktasına olan en yakın arkadaşı
-        //küçük ise  _maxDistanceToClosetFriend
         for (int i = 0; i < _sharedSpawnPoints.Count && _sharedSpawnPoints[i].DistanceToClosestFriend <= _maxDistanceToClosestFriend; i++)
         {
-            //i inci paylaşılmış ışınlanma noktasının distanceToClosestFriend <= _minMemberDistance değil ise
-            //(yani takımındaki arkadaşlarının üst üste ışınlanmasını önlemek amacıyla) ve
-            //DistanceToClosestEnemy <= _minMemberDistance değil ise
-            //(yani düşmanın üstüne ışınlanmamak için) ve iki saniye içinde başka bir ışınlanma olmadı ise
             if (!(_sharedSpawnPoints[i].DistanceToClosestFriend <= _minMemberDistance) && !(_sharedSpawnPoints[i].DistanceToClosestEnemy <= _minMemberDistance) && _sharedSpawnPoints[i].SpawnTimer <= 0)
             {
-                //i inci _sharedSpawnPoints noktasını uygun ışınlanılabilicek noktalar listesine ekle 
                 suitableSpawnPoints.Add(_sharedSpawnPoints[i]);
             }
         }
-        //uygun ışınlanılabilicek noktalar listesi boşsa
         if (suitableSpawnPoints.Count <= 0)
         {
-            //uygun ışınlanılabilicek noktalar listesine paylaşılmış ışınlanma noktalarının ilk elemanını gönder
             suitableSpawnPoints.Add(_sharedSpawnPoints[0]);
         }
 
     }
 
+    /// <summary>
+    /// paylaşımlı ışınlanma noktalarına (_sharedSpawnPoints)
+    /// o noktaya en yakın dost(DistanceToClosestFriend) ve en yakın düşman(DistanceTOClosestEnemy)
+    /// mesafelerini hesaplar
+    /// </summary>
+    /// <param name="playerTeam">player ın Takımı </param>
     private void CalculateDistancesForSpawnPoints(PlayerTeam playerTeam)
     {
         for (int i = 0; i < _sharedSpawnPoints.Count; i++)
@@ -159,20 +184,29 @@ public class SpawnManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// _sharedSpawnPoints noktalarının pozisyonunu tek tek parametre olarak alır.
+    /// ışınlanacak olan kişi (player) kendi ise döngü bir sonraki index'ten devam eder.
+    /// Player lar disabled değil, ölmemiş, takımı var ve atnı takımda ise
+    /// parametre olarak alınan mesafeye olan uzaklıkl hesaplanır.
+    /// eğer döngü ilk defa dönüyorsa en yakın mesafe(_closestDistance) ilk player ınki alınır.
+    /// değil ise önceki en yakın mesafe ile karşılaştırılır.
+    /// eğer küçükse en yakın mesafe(_ClosestDistance) güncellenir
+    /// </summary>
+    /// <param name="position">paylaşılmış ışınlanma noktaları(_SharedSpawnPoints) </param>
+    /// <param name="playerTeam">Player ın takımı</param>
+    /// <returns>o noktadaki En yakın takım arkadaşının mesafesini döndürür</returns>
     private float GetDistanceToClosestMember(Vector3 position, PlayerTeam playerTeam)
     {
         bool firstLoop = true;
         foreach (var player in DummyPlayers)
         {
-            if (player == DummyPlayers[0])
+            if (PlayerToBeSpawned == player)
             {
                 continue;
             }
-
-            //player disabled değil,playerTeam none değil ise, player ile aynı takımdaysa( yani dostsa ) ve ölmemişse
             if (!player.Disabled && player.PlayerTeamValue != PlayerTeam.None && player.PlayerTeamValue == playerTeam && !player.IsDead())
             {
-                //takım arkadaşlarının (aynı takım üyelerinin) ışınlanma noktasına olan uzaklığını hesapla
                 float playerDistanceToSpawnPoint = Vector3.Distance(position, player.Transform.position);
 
                 if (firstLoop)
@@ -180,16 +214,12 @@ public class SpawnManager : MonoBehaviour
                     _closestDistance = playerDistanceToSpawnPoint;
                     firstLoop = false;
                 }
-          
-                //bu mesafe _closestDistance dan küçükse _closestDistance a bu mesafeyi ata
                 if (playerDistanceToSpawnPoint < _closestDistance)
                 {
                     _closestDistance = playerDistanceToSpawnPoint;
                 }
             }
         }
-        //en yakın takım arkadaşının mesafesini dödürüyor
-        //_closestDistance döndür
         return _closestDistance;
     }
 
